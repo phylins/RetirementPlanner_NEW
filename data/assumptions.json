@@ -2,7 +2,7 @@
   "age": 41,
   "startYear": 2026,
   "retirementYears": 45,
-  "investableAssets": 183000000,
+  "investableAssets": 242928232,
   "netWorthGap": 42928232,
   "annualLivingExpense": 5000000,
   "incomeSelf": 14000000,
@@ -40,7 +40,7 @@
   "dynamicColaDrawdownThreshold": -5.0,
   "dynamicColaWithdrawalThreshold": 4.5,
   "marketMode": "balancedMarkov",
-  "spendingStrategy": "smile",
+  "spendingStrategy": "dynamic",
   "dynamicColaFreezeRule": "balanced",
   "dynamicColaStockDrawdownThreshold": -5.0,
   "dynamicColaBondDrawdownThreshold": -5.0

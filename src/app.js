@@ -23,7 +23,7 @@ const freezeRules = [
 let state, loans, scenarios, portfolio;
 const SIM_RUNS = 360;
 const SIM_SEED = 202600;
-const APP_VERSION = '5.8.0';
+const APP_VERSION = '5.9.0';
 let contributionSort = { key: 'riskShare', dir: 'desc' };
 let currentSim = null;
 let currentMatrix = null;
@@ -266,13 +266,13 @@ function exportCashflowCsv() {
   if (!currentSim) return;
   const headers = ['年份','年齡','年初資產','年底資產','生活費','貸款','總支出','提領率','投資報酬','新增投資','貸款餘額','通膨','組合報酬','股票報酬','債券報酬','Freeze'];
   const rows = currentSim.sample.map(r => [r.year,r.age,Math.round(r.beginAssets),Math.round(r.assets),Math.round(r.living),Math.round(r.loanPayment),Math.round(r.totalSpending),r.withdrawalRate.toFixed(2),Math.round(r.investmentReturn),Math.round(r.contribution),Math.round(r.loanBalance),r.inflation?.toFixed?.(2) ?? '',r.ret?.toFixed?.(2) ?? '',r.stockRet?.toFixed?.(2) ?? '',r.bondRet?.toFixed?.(2) ?? '',r.freeze ? 'Y':'N']);
-  downloadCsv('retirement_cashflow_v5_8.csv', headers, rows);
+  downloadCsv('retirement_cashflow_v5_9.csv', headers, rows);
 }
 function exportDecisionCsv() {
   if (!currentMatrix) return;
   const headers = ['淨資產','可投資資產','第一年提領率','成功率','SAFE MAX','建議','邊際成功率'];
   const rows = currentMatrix.map((r,i) => [Math.round(netWorthFromInvestable(r.assets)),Math.round(r.assets),r.firstWithdrawalRate.toFixed(2),r.successRate.toFixed(1),r.safemax.toFixed(2),String(r.advice).replace(/^[^\s]+\s*/,''),i===0?'':(currentMatrix[i].successRate-currentMatrix[i-1].successRate).toFixed(1)]);
-  downloadCsv('retirement_decision_matrix_v5_8.csv', headers, rows);
+  downloadCsv('retirement_decision_matrix_v5_9.csv', headers, rows);
 }
 function renderDiagnostics(sim, matrix) {
   const first = sim.sample[0];
@@ -334,7 +334,7 @@ async function init(){
   // v5.1 changes default living expense from 600萬 to 500萬.
   // If an older saved profile still has the old untouched default 600萬, migrate it once.
   if (!saved?.version && state.annualLivingExpense === 6000000) state.annualLivingExpense = assumptions.annualLivingExpense;
-  // v5.8 fallback for older saved profiles.
+  // v5.9 fallback for older saved profiles.
   state.dynamicColaInflationThreshold ??= assumptions.dynamicColaInflationThreshold ?? 5;
   state.dynamicColaStockDrawdownThreshold ??= assumptions.dynamicColaStockDrawdownThreshold ?? state.dynamicColaDrawdownThreshold ?? -5;
   state.dynamicColaBondDrawdownThreshold ??= assumptions.dynamicColaBondDrawdownThreshold ?? state.dynamicColaDrawdownThreshold ?? -5;
@@ -347,6 +347,6 @@ async function init(){
   $('save-modal-close')?.addEventListener('click', hideSaveModal);
   $('save-modal')?.addEventListener('click', e=>{ if(e.target.id==='save-modal') hideSaveModal(); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') hideSaveModal(); });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=5.8.0').catch(()=>{});
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=5.9.0').catch(()=>{});
 }
 init();
