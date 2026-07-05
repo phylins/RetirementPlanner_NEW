@@ -60,7 +60,7 @@
 .control-row.number-only{grid-template-columns:minmax(130px,1fr) 92px}.control-row.number-only input[type=text]{grid-column:2/3}
 
 
-/* v5.10: net-worth scenario snapshot and control order */
+/* v6.0: net-worth scenario snapshot and control order */
 .snapshot-box{margin:10px 0 12px;padding:11px;background:#fff;border:1px solid #e3eafb;border-radius:13px;box-shadow:0 4px 16px rgba(15,23,42,.035)}
 .snapshot-title{font-size:12px;font-weight:900;color:#334155;margin-bottom:8px;letter-spacing:.02em}
 .snapshot-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -71,7 +71,7 @@
 .snapshot-box p{font-size:11px;line-height:1.4;margin:8px 0 0;color:#64748b}
 .scenario-top .scenario-buttons{margin-top:10px}
 
-/* v5.10: compact centered net-worth scenario buttons */
+/* v6.0: compact centered net-worth scenario buttons */
 .scenario-top .scenario-buttons{
   grid-template-columns:repeat(3, minmax(0,1fr));
   gap:6px;
@@ -96,3 +96,6 @@
 @media(max-width:900px){
   .scenario-top .scenario-buttons{grid-template-columns:repeat(2,minmax(0,1fr));}
 }
+
+/* v6.0 Personal Decision System */
+.personal-decision-grid{display:grid;grid-template-columns:1fr;gap:14px}.feature-summary h4{margin:0 0 4px;font-size:17px;color:#102033}.feature-summary p{margin:0 0 12px;color:#64748b;font-size:13px;line-height:1.55}.mini-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0 12px}.mini-grid div,.report-grid div{background:#f8fbff;border:1px solid #e3eafb;border-radius:12px;padding:12px}.mini-grid span,.report-grid span{display:block;color:#64748b;font-size:12px;font-weight:900}.mini-grid b,.report-grid b{display:block;margin-top:4px;font-size:20px;color:#102033}.feature-table{font-size:13px}.feature-table th,.feature-table td{padding:10px 12px;vertical-align:top}.feature-table th{text-align:right}.feature-table th:first-child,.feature-table td:first-child{text-align:left}.traffic-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;border-radius:16px;padding:18px;border:1px solid #e3eafb}.traffic-card.green{background:#f0fdf4;border-color:#bbf7d0}.traffic-card.yellow{background:#fffbeb;border-color:#fde68a}.traffic-card.red{background:#fef2f2;border-color:#fecaca}.traffic-card span{font-size:12px;font-weight:900;color:#64748b}.traffic-card b{display:block;font-size:26px;margin:4px 0;color:#102033}.traffic-card p{margin:0;color:#52627a;line-height:1.55}.traffic-card ul{margin:0;padding:0;list-style:none;display:grid;gap:8px;min-width:230px}.traffic-card li{background:rgba(255,255,255,.72);border:1px solid rgba(148,163,184,.25);padding:9px 10px;border-radius:10px;color:#475569}.traffic-card strong{float:right;color:#102033}.report-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.annual-comment{margin-top:12px;background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;border-radius:12px;padding:12px;font-size:14px;line-height:1.6}.annual-comment b{color:#9a3412}@media(max-width:1500px){.mini-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.report-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.traffic-card{grid-template-columns:1fr}}@media(max-width:760px){.mini-grid,.report-grid{grid-template-columns:1fr}.traffic-card ul{min-width:0}}

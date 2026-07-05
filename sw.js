@@ -1,4 +1,4 @@
-const CACHE_NAME = 'retirement-planner-v5.10.0';
+const CACHE_NAME = 'retirement-planner-v6.0.0';
 const STATIC_ASSETS = [
   './public/manifest.json',
   './public/icons/icon-192.svg',

@@ -23,7 +23,7 @@ const freezeRules = [
 let state, loans, scenarios, portfolio;
 const SIM_RUNS = 360;
 const SIM_SEED = 202600;
-const APP_VERSION = '5.10.0';
+const APP_VERSION = '6.0.0';
 let contributionSort = { key: 'riskShare', dir: 'desc' };
 let currentSim = null;
 let currentMatrix = null;
@@ -293,6 +293,144 @@ function renderDiagnostics(sim, matrix) {
   panel.innerHTML = items.map(it => `<div class="diag-item"><span>${it.label}</span><b>${it.value}</b><p>${it.detail}</p></div>`).join('');
 }
 
+
+
+function totalLoanBalance(list = loans) {
+  return list.reduce((sum, l) => sum + Number(l.balance || 0), 0);
+}
+function cloneLoansWithPayoff(predicate) {
+  let payoff = 0;
+  const adjusted = loans.map(l => {
+    if (predicate(l)) {
+      payoff += Number(l.balance || 0);
+      return { ...l, balance: 0, months: 0 };
+    }
+    return { ...l };
+  });
+  return { payoff, loans: adjusted };
+}
+function modeLabel() {
+  return modes.find(m => m[0] === state.marketMode)?.[1] || state.marketMode;
+}
+function strategyLabel() {
+  return strategies.find(s => s[0] === state.spendingStrategy)?.[1] || state.spendingStrategy;
+}
+function renderTrafficLight(sim) {
+  const node = $('retirement-light');
+  if (!node) return;
+  const first = sim.sample[0];
+  const wr = first.totalSpending / Math.max(state.investableAssets, 1) * 100;
+  const loanPressure = first.loanPayment / Math.max(first.totalSpending, 1) * 100;
+  let level = 'red', title = '🔴 建議保守 / 延後', detail = '目前成功率或第一年提領率仍偏緊，建議降低生活費、降低貸款壓力或提高可投資資產。';
+  if (sim.successRate >= 95 && wr <= sim.safemax + 0.3 && loanPressure < 45) {
+    level = 'green'; title = '🟢 可以退休'; detail = '成功率、提領率與貸款壓力都在較舒適區間。仍建議保留現金緩衝並定期檢查市場估值。';
+  } else if (sim.successRate >= 88 && wr <= sim.safemax + 1.5) {
+    level = 'yellow'; title = '🟡 可退休但需控支出'; detail = '初期仍受貸款或市場估值影響，建議用 Dynamic COLA 與彈性支出控管前 10 年序列風險。';
+  }
+  node.innerHTML = `<div class="traffic-card ${level}">
+    <div><span>退休燈號</span><b>${title}</b><p>${detail}</p></div>
+    <ul>
+      <li>成功率：<strong>${pct(sim.successRate,1)}</strong></li>
+      <li>第一年提領率：<strong>${pct(wr,2)}</strong></li>
+      <li>SAFE MAX：<strong>${pct(sim.safemax,2)}</strong></li>
+      <li>貸款占第一年支出：<strong>${pct(loanPressure,1)}</strong></li>
+    </ul>
+  </div>`;
+}
+function renderOneMoreYear(sim, timing) {
+  const node = $('one-more-year');
+  if (!node) return;
+  const first = sim.sample[0];
+  const income = state.incomeSelf + state.incomeSpouse;
+  const tax = estimateTax(income, state.effectiveTaxByIncome);
+  const after = income - tax;
+  const annualSurplus = after - first.totalSpending;
+  const loanDrop = totalLoanBalance() - (annualLoanSchedule(loans, 1, state.startYear)[0]?.loanBalance || 0);
+  const projectedReturn = state.investableAssets * sim.stats.cagr / 100;
+  const projectedInvestable = state.investableAssets + annualSurplus + projectedReturn;
+  const now = timing[0] || { successRate: sim.successRate, firstWithdrawalRate: first.withdrawalRate };
+  const next = timing[1] || now;
+  const successGain = next.successRate - now.successRate;
+  const wrDrop = now.firstWithdrawalRate - next.firstWithdrawalRate;
+  node.innerHTML = `<div class="feature-summary"><h4>再工作一年價值</h4><p>以目前收入、稅後收入、生活費與貸款估算，再工作一年同時增加投資資產並降低貸款餘額。</p></div>
+  <div class="mini-grid">
+    <div><span>稅後收入</span><b>${twMoney(after)}</b></div>
+    <div><span>年度新增投資</span><b>${twMoney(annualSurplus)}</b></div>
+    <div><span>貸款本金下降</span><b>${twMoney(loanDrop)}</b></div>
+    <div><span>預估一年後投資資產</span><b>${twMoney(projectedInvestable)}</b></div>
+    <div><span>成功率變化</span><b>${successGain >= 0 ? '+' : ''}${pct(successGain,1)}</b></div>
+    <div><span>第一年提領率下降</span><b>${wrDrop >= 0 ? '-' : '+'}${pct(Math.abs(wrDrop),2)}</b></div>
+  </div>`;
+}
+function renderLoanStrategies(sim) {
+  const node = $('loan-strategy');
+  if (!node) return;
+  const baselineLoans = loans.map(l => ({ ...l }));
+  const short = cloneLoansWithPayoff(l => Number(l.months) <= 84 && !String(l.name).includes('HSBC'));
+  const highApr = cloneLoansWithPayoff(l => Number(l.apr || 0) >= 2.6 && !String(l.name).includes('HSBC'));
+  const all = cloneLoansWithPayoff(l => true);
+  const rows = [
+    { name: '維持貸款，資金繼續投資', payoff: 0, loans: baselineLoans, note: '可投資資產最高，但退休初期現金流壓力最大。' },
+    { name: '清償短期信貸 / 個貸', payoff: short.payoff, loans: short.loans, note: '降低前 7 年貸款壓力，適合退休前降槓桿。' },
+    { name: '優先清高利率貸款', payoff: highApr.payoff, loans: highApr.loans, note: '兼顧降低利息與保留部分投資資產。' },
+    { name: '全數清償貸款', payoff: all.payoff, loans: all.loans, note: '現金流最輕，但會大幅降低可投資資產。' }
+  ].map((r, i) => {
+    const cfg = { ...state, investableAssets: Math.max(0, state.investableAssets - r.payoff) };
+    const s = i === 0 ? sim : simulate(cfg, r.loans, portfolio, Math.max(160, Math.floor(SIM_RUNS / 2)), SIM_SEED + 7000 + i * 101);
+    const loanFirst = annualLoanSchedule(r.loans, 1, state.startYear)[0]?.loanPayment || 0;
+    const first = s.sample[0];
+    return { ...r, successRate: s.successRate, investable: cfg.investableAssets, firstLoan: loanFirst, firstWR: first.withdrawalRate };
+  });
+  node.innerHTML = `<div class="feature-summary"><h4>貸款提前清償 vs 繼續投資</h4><p>比較不同降槓桿策略對第一年現金流、可投資資產與退休成功率的影響。</p></div>
+  <div class="table-wrap no-scroll"><table class="feature-table"><thead><tr><th>策略</th><th>需動用資金</th><th>剩餘可投資資產</th><th>第一年貸款</th><th>第一年提領率</th><th>成功率</th><th>解讀</th></tr></thead><tbody>
+  ${rows.map(r => `<tr><td><b>${r.name}</b></td><td>${twMoney(r.payoff)}</td><td>${twMoney(r.investable)}</td><td>${twMoney(r.firstLoan)}</td><td>${pct(r.firstWR,2)}</td><td>${pct(r.successRate,1)}</td><td>${r.note}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+function renderSpendingTiers() {
+  const node = $('spending-tiers');
+  if (!node) return;
+  const living = Number(state.annualLivingExpense || 0);
+  const tiers = [
+    { name: '基本生活', ratio: 0.45, cut: '不可砍', note: '食衣住行、基本家庭支出。' },
+    { name: '保險 / 車 / 房屋維護', ratio: 0.20, cut: '低', note: '固定性高，需提前預留。' },
+    { name: '旅遊娛樂', ratio: 0.20, cut: '高', note: '熊市時最適合暫緩。' },
+    { name: '彈性消費', ratio: 0.15, cut: '高', note: 'Dynamic COLA 與 Guardrails 的主要調整來源。' }
+  ];
+  const cuttable = tiers.filter(t => t.cut === '高').reduce((s,t)=>s+living*t.ratio,0);
+  node.innerHTML = `<div class="feature-summary"><h4>生活費分層</h4><p>把年度生活費拆成不可砍與可調整項目，讓熊市時的支出控制更接近真實生活。</p></div>
+  <div class="mini-grid"><div><span>年度生活費</span><b>${twMoney(living)}</b></div><div><span>高彈性支出</span><b>${twMoney(cuttable)}</b></div><div><span>熊市建議降幅</span><b>${twMoney(cuttable*0.35)}</b></div><div><span>最低核心生活</span><b>${twMoney(living-cuttable*0.35)}</b></div></div>
+  <div class="table-wrap no-scroll"><table class="feature-table"><thead><tr><th>層級</th><th>金額</th><th>可調整性</th><th>說明</th></tr></thead><tbody>${tiers.map(t=>`<tr><td><b>${t.name}</b></td><td>${twMoney(living*t.ratio)}</td><td>${t.cut}</td><td>${t.note}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function renderAnnualReport(sim) {
+  const node = $('annual-report');
+  if (!node) return;
+  const r = sim.sample[0];
+  const loanDrop = totalLoanBalance() - r.loanBalance;
+  let nextBudget = r.living;
+  let recommendation = '維持目前年度生活費，持續觀察市場與貸款餘額。';
+  if (sim.successRate >= 96 && r.withdrawalRate < sim.safemax - 0.4) { nextBudget = r.living * 1.03; recommendation = '安全餘裕較高，可小幅增加彈性預算或提高現金緩衝。'; }
+  else if (sim.successRate < 90 || r.withdrawalRate > sim.safemax + 0.8) { nextBudget = r.living * 0.95; recommendation = '建議暫時降低彈性支出，優先把提領率壓回安全區。'; }
+  node.innerHTML = `<div class="feature-summary"><h4>個人版年度報告</h4><p>以目前設定產生 2026 年退休現金流快照，作為年度檢討與下一年度預算依據。</p></div>
+  <div class="report-grid">
+    <div><span>年初可投資資產</span><b>${twMoney(r.beginAssets)}</b></div>
+    <div><span>年底可投資資產</span><b>${twMoney(r.assets)}</b></div>
+    <div><span>實際生活費</span><b>${twMoney(r.living)}</b></div>
+    <div><span>貸款支出</span><b>${twMoney(r.loanPayment)}</b></div>
+    <div><span>實際提領率</span><b>${pct(r.withdrawalRate,2)}</b></div>
+    <div><span>貸款餘額下降</span><b>${twMoney(loanDrop)}</b></div>
+    <div><span>投資報酬</span><b>${twMoney(r.investmentReturn)}</b></div>
+    <div><span>下一年建議生活費</span><b>${twMoney(nextBudget)}</b></div>
+  </div>
+  <div class="annual-comment"><b>年度建議：</b>${recommendation}</div>`;
+}
+function renderPersonalDecision(sim, timing) {
+  renderTrafficLight(sim);
+  renderOneMoreYear(sim, timing);
+  renderLoanStrategies(sim);
+  renderSpendingTiers();
+  renderAnnualReport(sim);
+}
+
 function renderNotes(){
   const mode=modes.find(m=>m[0]===state.marketMode)?.[1]; const strat=strategies.find(s=>s[0]===state.spendingStrategy)?.[1];
   $('model-notes').innerHTML=`
@@ -305,7 +443,7 @@ function render(){
   [...document.querySelectorAll('#scenario-buttons button')].forEach(b=>{ const n=Number(b.dataset.netWorth||0); b.classList.toggle('active', Math.abs(n-netWorthFromInvestable(state.investableAssets))<10000000); });
   const sim=simulate(state,loans,portfolio,SIM_RUNS,SIM_SEED); const loanRows=annualLoanSchedule(loans,state.retirementYears,state.startYear); const timing=timingOptimizer(state,loans,portfolio,{runs:SIM_RUNS,seedBase:SIM_SEED}); const matrix=decisionMatrix(state,loans,portfolio,scenarios.map(investableFromNetWorth),{runs:SIM_RUNS,seedBase:SIM_SEED});
   currentSim = sim; currentMatrix = matrix; currentLoanRows = loanRows;
-  renderKpis(sim, loanRows); renderTables(sim,matrix,[]); renderPortfolio(sim.stats); renderDiagnostics(sim, matrix); renderNotes();
+  renderKpis(sim, loanRows); renderTables(sim,matrix,[]); renderPortfolio(sim.stats); renderDiagnostics(sim, matrix); renderPersonalDecision(sim, timing); renderNotes();
   requestAnimationFrame(() => {
     lineChart($('asset-chart'),{data:sim.percentiles,series:[{key:'p10',label:'P10 悲觀',className:'red'},{key:'p50',label:'P50 中位數',className:'blue'},{key:'p60',label:'P60 樂觀',className:'green'}],height:260,yMin:0,yMax:1200000000,yStep:200000000});
     barLineChart($('expense-chart'),{data:sim.sample,bars:[{key:'living',label:'生活費',className:'green'},{key:'loanPayment',label:'貸款',className:'amber'}],lines:[{key:'totalSpending',label:'總支出',className:'blue'}],y2Series:{key:'inflation',label:'通膨率（右軸）',className:'red'},y2Format:v=>pct(v,1),y2Min:0,y2Max:10,y2Step:2,height:260,yMin:0,yMax:12000000,yStep:2000000});
@@ -357,7 +495,7 @@ async function init(){
   // v5.1 changes default living expense from 600萬 to 500萬.
   // If an older saved profile still has the old untouched default 600萬, migrate it once.
   if (!saved?.version && state.annualLivingExpense === 6000000) state.annualLivingExpense = assumptions.annualLivingExpense;
-  // v5.10 fallback for older saved profiles.
+  // v6.0 fallback for older saved profiles.
   state.dynamicColaInflationThreshold ??= assumptions.dynamicColaInflationThreshold ?? 5;
   state.dynamicColaStockDrawdownThreshold ??= assumptions.dynamicColaStockDrawdownThreshold ?? state.dynamicColaDrawdownThreshold ?? -5;
   state.dynamicColaBondDrawdownThreshold ??= assumptions.dynamicColaBondDrawdownThreshold ?? state.dynamicColaDrawdownThreshold ?? -5;
@@ -372,6 +510,6 @@ async function init(){
   $('save-modal-close')?.addEventListener('click', hideSaveModal);
   $('save-modal')?.addEventListener('click', e=>{ if(e.target.id==='save-modal') hideSaveModal(); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') hideSaveModal(); });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=5.10.0').catch(()=>{});
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=6.0.0').catch(()=>{});
 }
 init();
