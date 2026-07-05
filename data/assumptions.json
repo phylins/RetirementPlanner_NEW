@@ -1,0 +1,47 @@
+{
+  "age": 41,
+  "startYear": 2026,
+  "retirementYears": 45,
+  "investableAssets": 183000000,
+  "netWorthGap": 42928232,
+  "annualLivingExpense": 5000000,
+  "incomeSelf": 14000000,
+  "incomeSpouse": 8000000,
+  "effectiveTaxByIncome": [
+    {
+      "income": 16000000,
+      "tax": 4200000
+    },
+    {
+      "income": 18000000,
+      "tax": 5000000
+    },
+    {
+      "income": 20000000,
+      "tax": 5800000
+    },
+    {
+      "income": 22000000,
+      "tax": 6600000
+    },
+    {
+      "income": 24000000,
+      "tax": 7500000
+    },
+    {
+      "income": 26000000,
+      "tax": 8400000
+    }
+  ],
+  "cape": 40,
+  "safemaxBase": 3.25,
+  "dynamicCola": true,
+  "dynamicColaInflationThreshold": 5.0,
+  "dynamicColaDrawdownThreshold": -5.0,
+  "dynamicColaWithdrawalThreshold": 4.5,
+  "marketMode": "balancedMarkov",
+  "spendingStrategy": "smile",
+  "dynamicColaFreezeRule": "balanced",
+  "dynamicColaStockDrawdownThreshold": -5.0,
+  "dynamicColaBondDrawdownThreshold": -5.0
+}
