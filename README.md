@@ -1,34 +1,23 @@
-# Retirement Planner v6.1 PWA
+# Retirement Planner v6.2 PWA
 
-## v6.1 更新重點
+## v6.2 更新重點
 
-- 修正 v6.0 個人決策模組的標題重複顯示問題。
-- 「再工作一年價值」、「貸款提前清償 vs 繼續投資」、「生活費分層」、「個人版年度報告」現在只保留卡片標題，內容區不再重複顯示同名標題。
-- 保留 v6.0 的五個個人決策模組：
-  1. 再工作一年價值
-  2. 貸款提前清償 vs 繼續投資
-  3. 生活費分層
-  4. 退休燈號
-  5. 個人版年度報告
-- 保留 v5.10 之後的 PWA 更新機制：CSS / JS 版本參數、更新到最新版、重置預設值。
+本版在 v6.1 個人決策版上新增剩餘個人化模組：
 
-## GitHub Pages 更新方式
+1. **真實持股與集中度**：依 Percento 截圖建立可辨識持股清單，顯示 ALAB 2X、00631L、台積電、MRVL 2X 等集中度。
+2. **科技股 / 槓桿資產 Glide Path**：規劃退休後逐年降低高波動資產比重。
+3. **退休前 10 年 Sequence Risk**：檢查前 10 年股災、股債雙殺、槓桿 ETF 腰斬與低報酬情境。
+4. **年度可花金額建議**：依成功率、SAFE MAX 與第一年提領率給出年度生活費建議區間。
+5. 保留 v6.1 的再工作一年價值、貸款提前清償、生活費分層、退休燈號與個人年度報告。
+
+## 使用方式
 
 1. 解壓縮 ZIP。
 2. 將最外層檔案覆蓋到 GitHub repo 根目錄。
-3. 確認 repo 根目錄的 `index.html` 第一行含有 `v6.1 root index`。
-4. Commit 到 main branch。
-5. 等 GitHub Actions / Pages 部署完成。
-6. 打開網站後如仍看到舊版，按右上角「更新到最新版」。
+3. 確認 repo 根目錄的 `index.html` 第一行含有 `v6.2 root index`。
+4. Commit / push 後等待 GitHub Pages 部署。
+5. 若仍顯示舊版，按右上角「更新到最新版」。
 
-## 正確根目錄結構
+## 注意
 
-```text
-index.html
-sw.js
-README.md
-package.json
-data/
-public/
-src/
-```
+真實持股資料目前依使用者提供的 Percento 截圖人工建立；若要完全精準，後續可改成匯入 CSV 或完整持股 JSON。

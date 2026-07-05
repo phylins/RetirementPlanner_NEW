@@ -1,12 +1,12 @@
-<!-- Retirement Planner v6.1 root index. If you see JavaScript text instead of the app, repo root index.html was overwritten incorrectly. -->
+<!-- Retirement Planner v6.2 root index. If you see JavaScript text instead of the app, repo root index.html was overwritten incorrectly. -->
 <!doctype html>
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Retirement Planner v6.1</title>
+  <title>Retirement Planner v6.2</title>
   <link rel="manifest" href="./public/manifest.json" />
-  <link rel="stylesheet" href="./src/styles.css?v=6.1.0" />
+  <link rel="stylesheet" href="./src/styles.css?v=6.2.0" />
   <meta name="theme-color" content="#165dff" />
 </head>
 <body>
@@ -16,7 +16,7 @@
         <div class="logo">RP</div>
         <div>
           <h1>Retirement Planner</h1>
-          <p>v6.1 Personal</p>
+          <p>v6.2 Personal</p>
         </div>
       </div>
 
@@ -80,11 +80,11 @@
     <main class="main">
       <header class="topbar">
         <div>
-          <h2>退休決策儀表板 v6.1</h2>
+          <h2>退休決策儀表板 v6.2</h2>
           <p>41歲起算，預設 65% 股票 / 30% 債券 / 5% 現金，股票內含 00631L 與 SOXX。</p>
         </div>
         <div class="topbar-actions">
-          <div class="version-badge"><b>v6.1</b><span>個人決策版｜2026-07-05</span></div>
+          <div class="version-badge"><b>v6.2</b><span>個人決策版｜2026-07-06</span></div>
           <button id="update-app-btn" class="secondary update-btn" type="button">更新到最新版</button>
           <button id="reset-default-btn" class="secondary reset-btn" type="button">重置預設值</button>
           <button id="export-cashflow-btn" class="secondary">匯出年度明細 CSV</button>
@@ -106,6 +106,10 @@
         <div class="card wide"><div class="card-head"><h3>貸款提前清償 vs 繼續投資</h3><p>比較維持貸款、清償短期貸款、清償高利率貸款與全數清償的差異。</p></div><div id="loan-strategy"></div></div>
         <div class="card wide"><div class="card-head"><h3>生活費分層</h3><p>把生活費拆成基本、固定、旅遊娛樂與彈性消費，方便熊市時調整。</p></div><div id="spending-tiers"></div></div>
         <div class="card wide"><div class="card-head"><h3>個人版年度報告</h3><p>產出第一年度現金流、提領率、貸款下降與下一年度預算建議。</p></div><div id="annual-report"></div></div>
+        <div class="card wide"><div class="card-head"><h3>真實持股與集中度</h3><p>依你提供的 Percento 截圖建立持股清單，觀察個股 / 槓桿 ETF 集中度。</p></div><div id="real-holdings"></div></div>
+        <div class="card wide"><div class="card-head"><h3>科技股 / 槓桿資產 Glide Path</h3><p>模擬退休後逐年降低 00631L、ALAB 2X、SOXX 等高波動資產比重。</p></div><div id="glide-path"></div></div>
+        <div class="card wide"><div class="card-head"><h3>退休前 10 年 Sequence Risk</h3><p>專門檢查退休前 10 年遇到股災、股債雙殺或高波動資產下跌時的壓力。</p></div><div id="sequence-risk"></div></div>
+        <div class="card wide"><div class="card-head"><h3>年度可花金額建議</h3><p>依退休燈號、SAFE MAX 與 Dynamic COLA 給出今年建議生活費範圍。</p></div><div id="spending-recommendation"></div></div>
       </section>
 
       <section class="full-grid portfolio-grid">
@@ -136,6 +140,6 @@
       <button id="save-modal-close" class="modal-close" type="button">知道了</button>
     </div>
   </div>
-  <script type="module" src="./src/app.js?v=6.1.0"></script>
+  <script type="module" src="./src/app.js?v=6.2.0"></script>
 </body>
 </html>

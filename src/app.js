@@ -23,11 +23,25 @@ const freezeRules = [
 let state, loans, scenarios, portfolio;
 const SIM_RUNS = 360;
 const SIM_SEED = 202600;
-const APP_VERSION = '6.1.0';
+const APP_VERSION = '6.2.0';
 let contributionSort = { key: 'riskShare', dir: 'desc' };
 let currentSim = null;
 let currentMatrix = null;
 let currentLoanRows = null;
+
+const REAL_HOLDINGS = [
+  { ticker:'ALAB2X', name:'Tradr 2X Long ALAB Daily ETF', market:'US', shares:32053, price:151.74, value:155220831, type:'槓桿單一股票 ETF', risk:'extreme', note:'Astera Labs 2x，每日槓桿，為目前最大集中風險與報酬來源。' },
+  { ticker:'00631L', name:'元大台灣50正2', market:'TW', shares:350000, price:38.80, value:13580000, type:'台股槓桿 ETF', risk:'high', note:'台灣大型權值股 2x 日報酬，與台股/台積電高度相關。' },
+  { ticker:'2330', name:'台積電', market:'TW', shares:3180, price:2445, value:7775100, type:'個股', risk:'high', note:'半導體核心持股，與 SOXX/00631L 有相關性。' },
+  { ticker:'MRVL2X', name:'二倍做多 MRVL ETF - GraniteShares', market:'US', shares:2205, price:37.93, value:2669148, type:'槓桿單一股票 ETF', risk:'extreme', note:'Marvell 2x，每日槓桿，需納入前 10 年序列風險。' },
+  { ticker:'MU2X', name:'二倍做多美光科技 ETF - Direxion', market:'US', shares:53, price:745.21, value:1260479, type:'槓桿單一股票 ETF', risk:'extreme', note:'Micron 2x，記憶體景氣循環曝險。' },
+  { ticker:'NBIS2X', name:'GraniteShares 2x Long NBIS Daily ETF', market:'US', shares:535, price:33.16, value:566174, type:'槓桿單一股票 ETF', risk:'extreme', note:'NBIS 2x，小型高波動衛星部位。' },
+  { ticker:'2330', name:'台積電（小帳）', market:'TW', shares:175, price:2445, value:427875, type:'個股', risk:'high', note:'台積電補充部位。' },
+  { ticker:'2891', name:'中信金', market:'TW', shares:5000, price:70.60, value:353000, type:'金融股', risk:'medium', note:'台灣金融股，波動低於半導體與槓桿 ETF。' }
+];
+function realHoldingsTotal(){ return REAL_HOLDINGS.reduce((s,h)=>s+h.value,0); }
+function highRiskHoldingValue(){ return REAL_HOLDINGS.filter(h=>['high','extreme'].includes(h.risk)).reduce((s,h)=>s+h.value,0); }
+
 function netWorthFromInvestable(v){ return Number(v || 0) - Number(state?.netWorthGap || 0); }
 function investableFromNetWorth(v){ return Number(v || 0) + Number(state?.netWorthGap || 0); }
 async function loadJson(path){ return fetch(path).then(r=>r.json()); }
@@ -266,13 +280,13 @@ function exportCashflowCsv() {
   if (!currentSim) return;
   const headers = ['年份','年齡','年初資產','年底資產','生活費','貸款','總支出','提領率','投資報酬','新增投資','貸款餘額','通膨','組合報酬','股票報酬','債券報酬','Freeze'];
   const rows = currentSim.sample.map(r => [r.year,r.age,Math.round(r.beginAssets),Math.round(r.assets),Math.round(r.living),Math.round(r.loanPayment),Math.round(r.totalSpending),r.withdrawalRate.toFixed(2),Math.round(r.investmentReturn),Math.round(r.contribution),Math.round(r.loanBalance),r.inflation?.toFixed?.(2) ?? '',r.ret?.toFixed?.(2) ?? '',r.stockRet?.toFixed?.(2) ?? '',r.bondRet?.toFixed?.(2) ?? '',r.freeze ? 'Y':'N']);
-  downloadCsv('retirement_cashflow_v5_9.csv', headers, rows);
+  downloadCsv('retirement_cashflow_v6_2.csv', headers, rows);
 }
 function exportDecisionCsv() {
   if (!currentMatrix) return;
   const headers = ['淨資產','可投資資產','第一年提領率','成功率','SAFE MAX','建議','邊際成功率'];
   const rows = currentMatrix.map((r,i) => [Math.round(netWorthFromInvestable(r.assets)),Math.round(r.assets),r.firstWithdrawalRate.toFixed(2),r.successRate.toFixed(1),r.safemax.toFixed(2),String(r.advice).replace(/^[^\s]+\s*/,''),i===0?'':(currentMatrix[i].successRate-currentMatrix[i-1].successRate).toFixed(1)]);
-  downloadCsv('retirement_decision_matrix_v5_9.csv', headers, rows);
+  downloadCsv('retirement_decision_matrix_v6_2.csv', headers, rows);
 }
 function renderDiagnostics(sim, matrix) {
   const first = sim.sample[0];
@@ -423,12 +437,105 @@ function renderAnnualReport(sim) {
   </div>
   <div class="annual-comment"><b>年度建議：</b>${recommendation}</div>`;
 }
+
+function renderRealHoldings() {
+  const node = $('real-holdings');
+  if (!node) return;
+  const total = realHoldingsTotal();
+  const visibleCoverage = total / Math.max(1, state.investableAssets) * 100;
+  const top = [...REAL_HOLDINGS].sort((a,b)=>b.value-a.value);
+  const rows = top.map(h => {
+    const share = h.value / Math.max(1, total) * 100;
+    const cls = h.risk === 'extreme' ? 'status-bad' : h.risk === 'high' ? 'status-warn' : 'status-good';
+    return `<tr><td><b>${h.ticker}</b><span>${h.name}</span></td><td>${h.market}</td><td>${h.type}</td><td>${twMoney(h.value)}</td><td>${pct(share,1)}</td><td class="${cls}">${h.risk}</td><td>${h.note}</td></tr>`;
+  }).join('');
+  node.innerHTML = `<div class="mini-grid">
+    <div><span>截圖持股合計</span><b>${twMoney(total)}</b></div>
+    <div><span>占目前可投資資產</span><b>${pct(visibleCoverage,1)}</b></div>
+    <div><span>高波動持股占截圖</span><b>${pct(highRiskHoldingValue()/Math.max(1,total)*100,1)}</b></div>
+    <div><span>最大單一部位</span><b>${top[0]?.ticker || '—'}</b></div>
+  </div>
+  <div class="table-wrap no-scroll"><table class="feature-table holdings-table"><thead><tr><th>標的</th><th>市場</th><th>類型</th><th>市值</th><th>占截圖</th><th>風險</th><th>說明</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="contrib-hint">目前依截圖可辨識持股建立清單；後續若提供完整 CSV，可進一步取代模型中的 ETF 假設。</p>`;
+}
+
+function renderGlidePath(sim) {
+  const node = $('glide-path');
+  if (!node) return;
+  const highRiskShare = highRiskHoldingValue() / Math.max(1, realHoldingsTotal()) * 100;
+  const plan = [
+    { year: 2026, age: 41, target: Math.min(45, Math.round(highRiskShare)), action:'不一次賣出，先建立 2 年現金/短債緩衝。' },
+    { year: 2028, age: 43, target: 35, action:'將部分單一股票 2x ETF 轉入 VOO / SGOV。' },
+    { year: 2030, age: 45, target: 25, action:'把 ALAB2X、MRVL2X 合計降至衛星部位。' },
+    { year: 2033, age: 48, target: 18, action:'高波動部位以 00631L / SOXX 為主，降低單一股票槓桿。' },
+    { year: 2036, age: 51, target: 12, action:'退休中期維持核心 ETF + 債券，再視燈號調整。' }
+  ];
+  node.innerHTML = `<div class="feature-summary"><p>Glide Path 的目標不是預測股價，而是降低退休前 10 年遭遇股災時的序列風險。</p></div>
+  <div class="mini-grid">
+    <div><span>目前高波動占截圖</span><b>${pct(highRiskShare,1)}</b></div>
+    <div><span>5 年後建議上限</span><b>25%</b></div>
+    <div><span>10 年後建議上限</span><b>12%</b></div>
+    <div><span>主要轉入資產</span><b>VOO / SGOV</b></div>
+  </div>
+  <div class="table-wrap no-scroll"><table class="feature-table"><thead><tr><th>年份</th><th>年齡</th><th>高波動部位目標</th><th>建議動作</th></tr></thead><tbody>${plan.map(p=>`<tr><td>${p.year}</td><td>${p.age}</td><td>${pct(p.target,0)}</td><td>${p.action}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function renderSequenceRisk(sim) {
+  const node = $('sequence-risk');
+  if (!node) return;
+  const firstSpending = sim.sample[0]?.totalSpending || state.annualLivingExpense;
+  const scenarios = [
+    { name:'前 3 年股災', stock:[-35,-15,8], bond:[5,3,2], note:'模擬退休初期立刻遇到大熊市。' },
+    { name:'股債雙殺', stock:[-22,-8,10], bond:[-12,-6,4], note:'類似 2022，股票與長債同跌。' },
+    { name:'槓桿 ETF 腰斬', stock:[-45,12,8], bond:[4,3,3], note:'00631L / 2x 單一股票 ETF 壓力測試。' },
+    { name:'前 10 年年化 0%', stock:[0,0,0], bond:[2,2,2], note:'長時間低報酬，檢查現金流韌性。' }
+  ].map(s => {
+    let assets = state.investableAssets;
+    for (let y=0; y<10; y++) {
+      const sr = s.stock[Math.min(y,s.stock.length-1)];
+      const br = s.bond[Math.min(y,s.bond.length-1)];
+      const ret = (portfolio.topLevel.stock/100)*sr + (portfolio.topLevel.bond/100)*br + (portfolio.topLevel.cash/100)*2;
+      const loan = annualLoanSchedule(loans, 10, state.startYear)[y]?.loanPayment || 0;
+      assets = Math.max(0, assets * (1 + ret/100) - firstSpending * Math.pow(1.015,y) - loan);
+    }
+    return { ...s, endAssets: assets, survives: assets > 0 };
+  });
+  node.innerHTML = `<div class="feature-summary"><p>這不是完整 Monte Carlo，而是專門檢查退休前 10 年的壓力情境；若這裡都撐得住，退休計畫韌性較高。</p></div>
+  <div class="table-wrap no-scroll"><table class="feature-table"><thead><tr><th>壓力情境</th><th>10 年後資產</th><th>結果</th><th>說明</th></tr></thead><tbody>${scenarios.map(s=>`<tr><td><b>${s.name}</b></td><td>${twMoney(s.endAssets)}</td><td>${s.survives?'🟢 撐得住':'🔴 資產耗盡'}</td><td>${s.note}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function renderSpendingRecommendation(sim) {
+  const node = $('spending-recommendation');
+  if (!node) return;
+  const first = sim.sample[0];
+  const current = Number(state.annualLivingExpense || 0);
+  const wr = first.totalSpending / Math.max(1, state.investableAssets) * 100;
+  let range, label, rationale;
+  if (sim.successRate >= 96 && wr <= sim.safemax + 0.3) {
+    range = [current * 0.95, current * 1.18]; label = '🟢 可舒適支出'; rationale = '成功率與提領率都有餘裕，可小幅提高旅遊娛樂或彈性預算。';
+  } else if (sim.successRate >= 88 && wr <= sim.safemax + 1.5) {
+    range = [current * 0.85, current * 1.02]; label = '🟡 建議控支出'; rationale = '可以退休但前期貸款與市場估值仍有壓力，建議把生活費控制在目前附近。';
+  } else {
+    range = [current * 0.65, current * 0.88]; label = '🔴 建議防守'; rationale = '成功率或提領率偏緊，應先降低旅遊娛樂與彈性消費，保留現金緩衝。';
+  }
+  node.innerHTML = `<div class="mini-grid">
+    <div><span>目前年度生活費</span><b>${twMoney(current)}</b></div>
+    <div><span>建議年度範圍</span><b>${twMoney(range[0])}～${twMoney(range[1])}</b></div>
+    <div><span>退休燈號建議</span><b>${label}</b></div>
+    <div><span>SAFE MAX 差距</span><b>${pct(wr - sim.safemax,2)}</b></div>
+  </div><div class="annual-comment"><b>建議：</b>${rationale}</div>`;
+}
+
 function renderPersonalDecision(sim, timing) {
   renderTrafficLight(sim);
   renderOneMoreYear(sim, timing);
   renderLoanStrategies(sim);
   renderSpendingTiers();
   renderAnnualReport(sim);
+  renderRealHoldings();
+  renderGlidePath(sim);
+  renderSequenceRisk(sim);
+  renderSpendingRecommendation(sim);
 }
 
 function renderNotes(){
@@ -495,7 +602,7 @@ async function init(){
   // v5.1 changes default living expense from 600萬 to 500萬.
   // If an older saved profile still has the old untouched default 600萬, migrate it once.
   if (!saved?.version && state.annualLivingExpense === 6000000) state.annualLivingExpense = assumptions.annualLivingExpense;
-  // v6.1 fallback for older saved profiles.
+  // v6.2 fallback for older saved profiles.
   state.dynamicColaInflationThreshold ??= assumptions.dynamicColaInflationThreshold ?? 5;
   state.dynamicColaStockDrawdownThreshold ??= assumptions.dynamicColaStockDrawdownThreshold ?? state.dynamicColaDrawdownThreshold ?? -5;
   state.dynamicColaBondDrawdownThreshold ??= assumptions.dynamicColaBondDrawdownThreshold ?? state.dynamicColaDrawdownThreshold ?? -5;
@@ -510,6 +617,6 @@ async function init(){
   $('save-modal-close')?.addEventListener('click', hideSaveModal);
   $('save-modal')?.addEventListener('click', e=>{ if(e.target.id==='save-modal') hideSaveModal(); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') hideSaveModal(); });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=6.1.0').catch(()=>{});
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=6.2.0').catch(()=>{});
 }
 init();
