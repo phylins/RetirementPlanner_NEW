@@ -60,7 +60,7 @@
 .control-row.number-only{grid-template-columns:minmax(130px,1fr) 92px}.control-row.number-only input[type=text]{grid-column:2/3}
 
 
-/* v5.9: net-worth scenario snapshot and control order */
+/* v5.10: net-worth scenario snapshot and control order */
 .snapshot-box{margin:10px 0 12px;padding:11px;background:#fff;border:1px solid #e3eafb;border-radius:13px;box-shadow:0 4px 16px rgba(15,23,42,.035)}
 .snapshot-title{font-size:12px;font-weight:900;color:#334155;margin-bottom:8px;letter-spacing:.02em}
 .snapshot-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -71,7 +71,7 @@
 .snapshot-box p{font-size:11px;line-height:1.4;margin:8px 0 0;color:#64748b}
 .scenario-top .scenario-buttons{margin-top:10px}
 
-/* v5.9: compact centered net-worth scenario buttons */
+/* v5.10: compact centered net-worth scenario buttons */
 .scenario-top .scenario-buttons{
   grid-template-columns:repeat(3, minmax(0,1fr));
   gap:6px;

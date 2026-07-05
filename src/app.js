@@ -4,7 +4,7 @@ import { portfolioStats, rebalanceTopLevel } from './engines/portfolioEngine.js'
 import { estimateTax } from './engines/withdrawalEngine.js';
 import { lineChart, barLineChart } from './components/chart.js';
 import { twMoney, twWan, pct, numberInput, parseNumberInput, clamp, star } from './utils/format.js';
-import { saveState, loadState } from './utils/storage.js';
+import { saveState, loadState, clearState } from './utils/storage.js';
 
 const $ = id => document.getElementById(id);
 const modes = [
@@ -23,7 +23,7 @@ const freezeRules = [
 let state, loans, scenarios, portfolio;
 const SIM_RUNS = 360;
 const SIM_SEED = 202600;
-const APP_VERSION = '5.9.0';
+const APP_VERSION = '5.10.0';
 let contributionSort = { key: 'riskShare', dir: 'desc' };
 let currentSim = null;
 let currentMatrix = null;
@@ -327,6 +327,29 @@ function hideSaveModal(){
   modal.hidden = true;
   modal.setAttribute('aria-hidden','true');
 }
+
+async function hardRefreshApp(){
+  try {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(reg => reg.unregister()));
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(key => caches.delete(key)));
+    }
+  } catch (err) {
+    console.warn('Hard refresh cleanup failed', err);
+  }
+  const base = window.location.origin + window.location.pathname;
+  window.location.href = `${base}?v=${Date.now()}`;
+}
+function resetToDefaults(){
+  clearState();
+  const base = window.location.origin + window.location.pathname;
+  window.location.href = `${base}?reset=${Date.now()}`;
+}
+
 async function init(){
   const [assumptions, loanData, port, scen] = await Promise.all([loadJson('./data/assumptions.json'),loadJson('./data/loans.json'),loadJson('./data/portfolio.json'),loadJson('./data/scenarios.json')]);
   const saved = loadState();
@@ -334,7 +357,7 @@ async function init(){
   // v5.1 changes default living expense from 600萬 to 500萬.
   // If an older saved profile still has the old untouched default 600萬, migrate it once.
   if (!saved?.version && state.annualLivingExpense === 6000000) state.annualLivingExpense = assumptions.annualLivingExpense;
-  // v5.9 fallback for older saved profiles.
+  // v5.10 fallback for older saved profiles.
   state.dynamicColaInflationThreshold ??= assumptions.dynamicColaInflationThreshold ?? 5;
   state.dynamicColaStockDrawdownThreshold ??= assumptions.dynamicColaStockDrawdownThreshold ?? state.dynamicColaDrawdownThreshold ?? -5;
   state.dynamicColaBondDrawdownThreshold ??= assumptions.dynamicColaBondDrawdownThreshold ?? state.dynamicColaDrawdownThreshold ?? -5;
@@ -342,11 +365,13 @@ async function init(){
   loans=loanData; portfolio = saved?.portfolio || port; scenarios=scen;
   setupControls(); render();
   $('save-btn').onclick=()=>{ saveState({version: APP_VERSION, state, portfolio}); showSaveModal(); };
+  $('update-app-btn')?.addEventListener('click', hardRefreshApp);
+  $('reset-default-btn')?.addEventListener('click', resetToDefaults);
   $('export-cashflow-btn')?.addEventListener('click', exportCashflowCsv);
   $('export-decision-btn')?.addEventListener('click', exportDecisionCsv);
   $('save-modal-close')?.addEventListener('click', hideSaveModal);
   $('save-modal')?.addEventListener('click', e=>{ if(e.target.id==='save-modal') hideSaveModal(); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') hideSaveModal(); });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=5.9.0').catch(()=>{});
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=5.10.0').catch(()=>{});
 }
 init();

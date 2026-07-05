@@ -1,21 +1,29 @@
-# Retirement Planner v5.9 PWA
+# Retirement Planner v5.10 PWA
 
-## v5.9 更新重點
+## v5.10 更新重點
 
-- 將目前常用選項設為預設：淨資產試算 2.0 億，對應 2026 可投資資產 NT$242,928,232。
-- 市場模式預設：Balanced Markov Regime。
-- 支出策略預設：Dynamic COLA。
-- 年度生活費預設：NT$5,000,000。
-- Dynamic COLA Freeze 預設啟用，Freeze 條件預設為「平衡」。
-- 「淨資產試算」按鈕縮小，並將字體置中於按鈕正中央。
-- 快取版本更新為 v5.9.0。
+- 改善 GitHub Pages / PWA 快取：`index.html`、`.js`、`.css`、`data/*.json` 採 network-first，不再長期吃舊版。
+- `index.html` 的 CSS / JS 路徑加入 `?v=5.10.0`。
+- 新增「更新到最新版」按鈕：會 unregister service worker、清除 Cache Storage，並以時間戳重新載入。
+- 新增「重置預設值」按鈕：清除本機 Local Storage 設定後重新載入，方便檢查新版預設值。
+- 版本號為 v5.10.0，沒有使用 4.x。
 
-## 上傳 GitHub Pages
+## 部署 GitHub Pages
 
-解壓縮後，把最外層的 `index.html`、`sw.js`、`src/`、`data/`、`public/` 等檔案直接覆蓋到 GitHub repo 根目錄。確認根目錄 `index.html` 第一行包含：
+1. 解壓縮 ZIP。
+2. 將最外層檔案覆蓋到 GitHub repo 根目錄。
+3. 確認 repo 根目錄的 `index.html` 第一行含有 `v5.10 root index`。
+4. Commit 後等待 Actions / Pages 綠色成功。
+5. 打開 Pages 網址；若仍看到舊版，按右上角「更新到最新版」。
 
-```html
-<!-- Retirement Planner v5.9 root index...
+## 本機測試
+
+```bash
+python -m http.server 8000
 ```
 
-再 commit，等 GitHub Pages 部署完成後按 `Ctrl + F5`。
+打開：
+
+```text
+http://localhost:8000
+```
