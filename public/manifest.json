@@ -1,7 +1,7 @@
 {
-  "name": "Retirement Planner v6.0",
+  "name": "Retirement Planner v6.1",
   "short_name": "RetirePlan",
-  "description": "Personal retirement planning PWA v6.0 with safer update handling, loan cash flow, portfolio engine, decision matrix, diagnostics, and CSV export.",
+  "description": "Personal retirement planning PWA v6.1 with safer update handling, loan cash flow, portfolio engine, decision matrix, diagnostics, and CSV export.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f7f9fc",

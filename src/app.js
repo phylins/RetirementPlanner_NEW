@@ -23,7 +23,7 @@ const freezeRules = [
 let state, loans, scenarios, portfolio;
 const SIM_RUNS = 360;
 const SIM_SEED = 202600;
-const APP_VERSION = '6.0.0';
+const APP_VERSION = '6.1.0';
 let contributionSort = { key: 'riskShare', dir: 'desc' };
 let currentSim = null;
 let currentMatrix = null;
@@ -352,7 +352,7 @@ function renderOneMoreYear(sim, timing) {
   const next = timing[1] || now;
   const successGain = next.successRate - now.successRate;
   const wrDrop = now.firstWithdrawalRate - next.firstWithdrawalRate;
-  node.innerHTML = `<div class="feature-summary"><h4>再工作一年價值</h4><p>以目前收入、稅後收入、生活費與貸款估算，再工作一年同時增加投資資產並降低貸款餘額。</p></div>
+  node.innerHTML = `<div class="feature-summary"><p>以目前收入、稅後收入、生活費與貸款估算，再工作一年同時增加投資資產並降低貸款餘額。</p></div>
   <div class="mini-grid">
     <div><span>稅後收入</span><b>${twMoney(after)}</b></div>
     <div><span>年度新增投資</span><b>${twMoney(annualSurplus)}</b></div>
@@ -381,7 +381,7 @@ function renderLoanStrategies(sim) {
     const first = s.sample[0];
     return { ...r, successRate: s.successRate, investable: cfg.investableAssets, firstLoan: loanFirst, firstWR: first.withdrawalRate };
   });
-  node.innerHTML = `<div class="feature-summary"><h4>貸款提前清償 vs 繼續投資</h4><p>比較不同降槓桿策略對第一年現金流、可投資資產與退休成功率的影響。</p></div>
+  node.innerHTML = `<div class="feature-summary"><p>比較不同降槓桿策略對第一年現金流、可投資資產與退休成功率的影響。</p></div>
   <div class="table-wrap no-scroll"><table class="feature-table"><thead><tr><th>策略</th><th>需動用資金</th><th>剩餘可投資資產</th><th>第一年貸款</th><th>第一年提領率</th><th>成功率</th><th>解讀</th></tr></thead><tbody>
   ${rows.map(r => `<tr><td><b>${r.name}</b></td><td>${twMoney(r.payoff)}</td><td>${twMoney(r.investable)}</td><td>${twMoney(r.firstLoan)}</td><td>${pct(r.firstWR,2)}</td><td>${pct(r.successRate,1)}</td><td>${r.note}</td></tr>`).join('')}
   </tbody></table></div>`;
@@ -397,7 +397,7 @@ function renderSpendingTiers() {
     { name: '彈性消費', ratio: 0.15, cut: '高', note: 'Dynamic COLA 與 Guardrails 的主要調整來源。' }
   ];
   const cuttable = tiers.filter(t => t.cut === '高').reduce((s,t)=>s+living*t.ratio,0);
-  node.innerHTML = `<div class="feature-summary"><h4>生活費分層</h4><p>把年度生活費拆成不可砍與可調整項目，讓熊市時的支出控制更接近真實生活。</p></div>
+  node.innerHTML = `<div class="feature-summary"><p>把年度生活費拆成不可砍與可調整項目，讓熊市時的支出控制更接近真實生活。</p></div>
   <div class="mini-grid"><div><span>年度生活費</span><b>${twMoney(living)}</b></div><div><span>高彈性支出</span><b>${twMoney(cuttable)}</b></div><div><span>熊市建議降幅</span><b>${twMoney(cuttable*0.35)}</b></div><div><span>最低核心生活</span><b>${twMoney(living-cuttable*0.35)}</b></div></div>
   <div class="table-wrap no-scroll"><table class="feature-table"><thead><tr><th>層級</th><th>金額</th><th>可調整性</th><th>說明</th></tr></thead><tbody>${tiers.map(t=>`<tr><td><b>${t.name}</b></td><td>${twMoney(living*t.ratio)}</td><td>${t.cut}</td><td>${t.note}</td></tr>`).join('')}</tbody></table></div>`;
 }
@@ -410,7 +410,7 @@ function renderAnnualReport(sim) {
   let recommendation = '維持目前年度生活費，持續觀察市場與貸款餘額。';
   if (sim.successRate >= 96 && r.withdrawalRate < sim.safemax - 0.4) { nextBudget = r.living * 1.03; recommendation = '安全餘裕較高，可小幅增加彈性預算或提高現金緩衝。'; }
   else if (sim.successRate < 90 || r.withdrawalRate > sim.safemax + 0.8) { nextBudget = r.living * 0.95; recommendation = '建議暫時降低彈性支出，優先把提領率壓回安全區。'; }
-  node.innerHTML = `<div class="feature-summary"><h4>個人版年度報告</h4><p>以目前設定產生 2026 年退休現金流快照，作為年度檢討與下一年度預算依據。</p></div>
+  node.innerHTML = `<div class="feature-summary"><p>以目前設定產生 2026 年退休現金流快照，作為年度檢討與下一年度預算依據。</p></div>
   <div class="report-grid">
     <div><span>年初可投資資產</span><b>${twMoney(r.beginAssets)}</b></div>
     <div><span>年底可投資資產</span><b>${twMoney(r.assets)}</b></div>
@@ -495,7 +495,7 @@ async function init(){
   // v5.1 changes default living expense from 600萬 to 500萬.
   // If an older saved profile still has the old untouched default 600萬, migrate it once.
   if (!saved?.version && state.annualLivingExpense === 6000000) state.annualLivingExpense = assumptions.annualLivingExpense;
-  // v6.0 fallback for older saved profiles.
+  // v6.1 fallback for older saved profiles.
   state.dynamicColaInflationThreshold ??= assumptions.dynamicColaInflationThreshold ?? 5;
   state.dynamicColaStockDrawdownThreshold ??= assumptions.dynamicColaStockDrawdownThreshold ?? state.dynamicColaDrawdownThreshold ?? -5;
   state.dynamicColaBondDrawdownThreshold ??= assumptions.dynamicColaBondDrawdownThreshold ?? state.dynamicColaDrawdownThreshold ?? -5;
@@ -510,6 +510,6 @@ async function init(){
   $('save-modal-close')?.addEventListener('click', hideSaveModal);
   $('save-modal')?.addEventListener('click', e=>{ if(e.target.id==='save-modal') hideSaveModal(); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') hideSaveModal(); });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=6.0.0').catch(()=>{});
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=6.1.0').catch(()=>{});
 }
 init();
