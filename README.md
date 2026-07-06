@@ -1,23 +1,17 @@
-# Retirement Planner v6.2 PWA
-
-## v6.2 更新重點
-
-本版在 v6.1 個人決策版上新增剩餘個人化模組：
-
-1. **真實持股與集中度**：依 Percento 截圖建立可辨識持股清單，顯示 ALAB 2X、00631L、台積電、MRVL 2X 等集中度。
-2. **科技股 / 槓桿資產 Glide Path**：規劃退休後逐年降低高波動資產比重。
-3. **退休前 10 年 Sequence Risk**：檢查前 10 年股災、股債雙殺、槓桿 ETF 腰斬與低報酬情境。
-4. **年度可花金額建議**：依成功率、SAFE MAX 與第一年提領率給出年度生活費建議區間。
-5. 保留 v6.1 的再工作一年價值、貸款提前清償、生活費分層、退休燈號與個人年度報告。
-
-## 使用方式
-
-1. 解壓縮 ZIP。
-2. 將最外層檔案覆蓋到 GitHub repo 根目錄。
-3. 確認 repo 根目錄的 `index.html` 第一行含有 `v6.2 root index`。
-4. Commit / push 後等待 GitHub Pages 部署。
-5. 若仍顯示舊版，按右上角「更新到最新版」。
-
-## 注意
-
-真實持股資料目前依使用者提供的 Percento 截圖人工建立；若要完全精準，後續可改成匯入 CSV 或完整持股 JSON。
+export const clamp = (n, min, max) => Math.min(max, Math.max(min, Number(n) || 0));
+export const pct = (n, digits = 1) => `${Number(n).toFixed(digits)}%`;
+export function twMoney(n, digits = 1) {
+  const v = Number(n) || 0;
+  const sign = v < 0 ? '-' : '';
+  const a = Math.abs(v);
+  if (a >= 100000000) return `${sign}${(a / 100000000).toFixed(digits)}億`;
+  if (a >= 10000) return `${sign}${Math.round(a / 10000).toLocaleString('zh-TW')}萬`;
+  return `${sign}${Math.round(a).toLocaleString('zh-TW')}`;
+}
+export function twWan(n, digits = 0) { return `${(Number(n || 0) / 10000).toFixed(digits)}萬`; }
+export function numberInput(v) { return Math.round(Number(v) || 0).toLocaleString('en-US'); }
+export function parseNumberInput(v) { return Number(String(v).replace(/,/g, '')) || 0; }
+export function star(score) {
+  const s = Math.max(0, Math.min(5, Math.round(score / 20)));
+  return '★★★★★'.slice(0, s) + '☆☆☆☆☆'.slice(0, 5 - s);
+}

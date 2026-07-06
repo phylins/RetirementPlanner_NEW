@@ -1,0 +1,140 @@
+<!-- Retirement Planner v6.3 root index. If you see JavaScript text instead of the app, repo root index.html was overwritten incorrectly. -->
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Retirement Planner v6.3</title>
+  <link rel="manifest" href="./public/manifest.json" />
+  <link rel="stylesheet" href="./src/styles.css?v=6.3.0" />
+  <meta name="theme-color" content="#165dff" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">RP</div>
+        <div>
+          <h1>Retirement Planner</h1>
+          <p>v6.3 Personal</p>
+        </div>
+      </div>
+
+      <section class="control-block compact scenario-top">
+        <h2>淨資產試算</h2>
+        <div class="snapshot-box">
+          <div class="snapshot-title">2026 當下資產參考</div>
+          <div id="networth-snapshot" class="snapshot-grid"></div>
+          <p>淨資產 = 現金 + 投資 − 負債。投資拆分為美股與台股；淨資產試算會用最新差額換算並更新下方「2026 可投資資產」欄位。</p>
+        </div>
+        <div id="scenario-buttons" class="scenario-buttons"></div>
+      </section>
+      <section class="control-block">
+        <h2>模式</h2>
+        <label class="field"><span>市場模式</span><select id="mode-select"></select></label>
+        <label class="field"><span>支出策略</span><select id="spending-select"></select></label>
+        <label class="toggle"><input type="checkbox" id="dynamic-cola" checked /> <span>啟用 Dynamic COLA Freeze</span></label>
+        <label class="field"><span>Freeze 條件</span><select id="freeze-rule-select"></select></label>
+        <div id="input-freeze-inflation"></div>
+        <div id="input-freeze-stock"></div>
+        <div id="input-freeze-bond"></div>
+        <div id="input-freeze-withdrawal"></div>
+        <div class="term-help">
+          <p><b>Dynamic COLA Freeze：</b>遇到高通膨、股票/債券下跌或提領率過高時，依你設定的門檻暫停調升生活費，降低資產耗盡風險。</p>
+          <p><b>Shiller CAPE：</b>用過去 10 年平均實質盈餘衡量美股估值，高 CAPE 通常代表未來安全提領率要更保守。</p>
+          <p><b>Spending Smile：</b>退休前期花費較高，中後期趨緩或下降，晚年預留醫療支出上升空間。</p>
+        </div>
+      </section>
+      <section class="control-block">
+        <h2>起始條件</h2>
+        <div id="input-investable"></div>
+        <div id="input-living"></div>
+        <div id="input-years"></div>
+        <div id="input-cape"></div>
+      </section>
+      <section class="control-block">
+        <h2>收入與稅</h2>
+        <div id="input-income-self"></div>
+        <div id="input-income-spouse"></div>
+      </section>
+      <section class="control-block">
+        <h2>股債現金</h2>
+        <div id="input-stock"></div>
+        <div id="input-bond"></div>
+        <div id="input-cash"></div>
+      </section>
+      <section class="control-block">
+        <h2>股票內部配置</h2>
+        <div id="equity-controls"></div>
+      </section>
+      <section class="control-block">
+        <h2>債券內部配置</h2>
+        <div id="bond-controls"></div>
+      </section>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2>退休決策儀表板 v6.3</h2>
+          <p>41歲起算，預設 65% 股票 / 30% 債券 / 5% 現金，股票內含 00631L 與 SOXX。</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="version-badge"><b>v6.3</b><span>個人決策版｜2026-07-06</span></div>
+          <button id="update-app-btn" class="secondary update-btn" type="button">更新到最新版</button>
+          <button id="reset-default-btn" class="secondary reset-btn" type="button">重置預設值</button>
+          <button id="export-cashflow-btn" class="secondary">匯出年度明細 CSV</button>
+          <button id="export-decision-btn" class="secondary">匯出決策矩陣 CSV</button>
+          <button id="save-btn" class="primary">儲存設定</button>
+        </div>
+      </header>
+      <section class="kpi-grid" id="kpi-grid"></section>
+      <section class="chart-grid">
+        <div class="card"><div class="card-head"><h3>資產曲線</h3><p>P10 / P50 / P60，台灣單位顯示</p></div><div id="asset-chart"></div></div>
+        <div class="card"><div class="card-head"><h3>年度支出與貸款</h3><p>生活費、貸款、總支出與通膨率（右軸）</p></div><div id="expense-chart"></div></div>
+        <div class="card"><div class="card-head"><h3>貸款餘額</h3><p>單位：萬元</p></div><div id="loan-chart"></div></div>
+        <div class="card"><div class="card-head"><h3>退休時間最佳化</h3><p>雙 Y 軸：左成功率，右第一年提領率</p></div><div id="timing-chart"></div></div>
+      </section>
+
+      <section class="full-grid personal-decision-grid">
+        <div class="card wide"><div class="card-head"><h3>退休燈號</h3><p>整合成功率、提領率、貸款壓力與高波動資產，給出目前退休狀態。</p></div><div id="retirement-light"></div></div>
+        <div class="card wide"><div class="card-head"><h3>再工作一年價值</h3><p>估算多工作一年帶來的稅後新增投資、貸款下降與成功率改善。</p></div><div id="one-more-year"></div></div>
+        <div class="card wide"><div class="card-head"><h3>貸款提前清償 vs 繼續投資</h3><p>比較維持貸款、清償短期貸款、清償高利率貸款與全數清償的差異。</p></div><div id="loan-strategy"></div></div>
+        <div class="card wide"><div class="card-head"><h3>生活費分層</h3><p>把生活費拆成基本、固定、旅遊娛樂與彈性消費，方便熊市時調整。</p></div><div id="spending-tiers"></div></div>
+        <div class="card wide"><div class="card-head"><h3>個人版年度報告</h3><p>產出第一年度現金流、提領率、貸款下降與下一年度預算建議。</p></div><div id="annual-report"></div></div>
+        <div class="card wide"><div class="card-head"><h3>真實持股與集中度</h3><p>依你提供的 Percento 截圖建立持股清單，觀察個股 / 槓桿 ETF 集中度。</p></div><div id="real-holdings"></div></div>
+        <div class="card wide"><div class="card-head"><h3>科技股 / 槓桿資產 Glide Path</h3><p>模擬退休後逐年降低 00631L、ALAB 2X、SOXX 等高波動資產比重。</p></div><div id="glide-path"></div></div>
+        <div class="card wide"><div class="card-head"><h3>退休前 10 年 Sequence Risk</h3><p>專門檢查退休前 10 年遇到股災、股債雙殺或高波動資產下跌時的壓力。</p></div><div id="sequence-risk"></div></div>
+        <div class="card wide"><div class="card-head"><h3>年度可花金額建議</h3><p>依退休燈號、SAFE MAX 與 Dynamic COLA 給出今年建議生活費範圍。</p></div><div id="spending-recommendation"></div></div>
+      </section>
+
+      <section class="full-grid portfolio-grid">
+        <div class="card portfolio-full"><div class="card-head"><h3>Portfolio Engine</h3><p>依資產類別估算報酬、波動與風險貢獻；標的附中文市場/產業說明。</p></div><div id="portfolio-summary"></div></div>
+      </section>
+      <section class="full-grid decision-grid">
+        <div class="card wide"><div class="card-head"><h3>退休決策矩陣</h3><p>1.8億到3.0億，每0.2億一跳。</p></div><div class="table-wrap no-scroll"><table id="decision-table"></table></div></div>
+      </section>
+      <section class="full-grid cashflow-grid">
+        <div class="card wide"><div class="card-head"><h3>年度支出與貸款明細</h3><p>每一年都列出生活費、貸款、總支出、提領率、年度報酬與新增投資。</p></div><div class="table-wrap tall"><table id="cashflow-table"></table></div></div>
+      </section>
+      <section class="full-grid diagnostics-grid">
+        <div class="card"><div class="card-head"><h3>模型診斷</h3><p>快速判讀目前試算的主要壓力來源與改善方向。</p></div><div id="diagnostics-panel" class="diagnostics-panel"></div></div>
+      </section>
+      <section class="full-grid notes-grid">
+        <div class="card"><div class="card-head"><h3>模型說明</h3></div><div class="model-notes" id="model-notes"></div></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="save-modal" class="modal-backdrop" hidden aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
+      <div class="modal-icon">✓</div>
+      <div>
+        <h3 id="save-modal-title">設定已儲存</h3>
+        <p>你的退休規劃參數已儲存在這台裝置的瀏覽器中。</p>
+      </div>
+      <button id="save-modal-close" class="modal-close" type="button">知道了</button>
+    </div>
+  </div>
+  <script type="module" src="./src/app.js?v=6.3.0"></script>
+</body>
+</html>

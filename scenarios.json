@@ -1,0 +1,12 @@
+{
+  "name": "retirement-planner-pwa",
+  "version": "6.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "dev:py3": "python3 -m http.server 8000"
+  },
+  "description": "Personal retirement planning PWA: loans, cash flow, portfolio allocation, balanced Markov regime/historical/stress simulations, decision matrix.",
+  "license": "UNLICENSED"
+}

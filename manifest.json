@@ -1,0 +1,17 @@
+{
+  "topLevel": {"stock":65,"bond":30,"cash":5},
+  "equity": {
+    "00631L": {"weight":20,"cagr":13.0,"vol":48,"category":"taiwanLeveraged","name":"台灣50正2","description":"台股槓桿型 ETF，目標為台灣大型權值股約 2 倍日報酬，波動高，適合成長型衛星配置。"},
+    "VOO": {"weight":40,"cagr":9.5,"vol":17,"category":"usCore","name":"美國 S&P 500 大型股","description":"追蹤美國 S&P 500 指數，代表美國大型股核心市場。"},
+    "VTI": {"weight":10,"cagr":9.3,"vol":18,"category":"usCore","name":"美國全市場股票","description":"涵蓋美國大型、中型與小型股，作為美股廣泛分散配置。"},
+    "VXUS": {"weight":10,"cagr":7.5,"vol":19,"category":"global","name":"美國以外全球股票","description":"投資美國以外已開發與新興市場，用於降低單一美國市場估值風險。"},
+    "SOXX": {"weight":20,"cagr":10.5,"vol":31,"category":"semiconductor","name":"美國半導體指數","description":"追蹤美國上市半導體產業，偏向 AI、晶片、設備與半導體供應鏈。"}
+  },
+  "bond": {
+    "IEF": {"weight":55,"cagr":3.5,"vol":8,"category":"treasury","name":"美國 7-10 年公債","description":"中天期美國公債，作為退休組合主要防禦與再平衡資產。"},
+    "TLT": {"weight":15,"cagr":4.0,"vol":17,"category":"longTreasury","name":"美國 20 年以上長天期公債","description":"長天期美國公債，利率下行時避險效果較強，但波動也較高。"},
+    "VCIT": {"weight":15,"cagr":4.5,"vol":9,"category":"credit","name":"美國中天期投資級公司債","description":"投資級公司債，提供較公債高的收益，但有信用利差風險。"},
+    "SGOV": {"weight":15,"cagr":3.5,"vol":1,"category":"cashLike","name":"美國 0-3 個月短期國債","description":"短天期美國國債 ETF，接近現金與 T-Bill 水位，用於提領緩衝池。"}
+  },
+  "cash": {"cagr":2.0,"vol":0.5,"name":"現金 / MMF","description":"銀行現金、貨幣市場基金或短期備用金，主要用於流動性與緊急支出。"}
+}

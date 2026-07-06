@@ -1,0 +1,21 @@
+{
+  "name": "Retirement Planner v6.3",
+  "short_name": "RP v6.3",
+  "description": "Personal retirement planning PWA v6.3 with real holdings, glide path, sequence risk, spending recommendation, loan cash flow, portfolio engine and decision matrix.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f9fc",
+  "theme_color": "#165dff",
+  "icons": [
+    {
+      "src": "icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
