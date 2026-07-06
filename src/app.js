@@ -23,24 +23,52 @@ const freezeRules = [
 let state, loans, scenarios, portfolio;
 const SIM_RUNS = 360;
 const SIM_SEED = 202600;
-const APP_VERSION = '6.2.0';
+const APP_VERSION = '6.3.0';
 let contributionSort = { key: 'riskShare', dir: 'desc' };
 let currentSim = null;
 let currentMatrix = null;
 let currentLoanRows = null;
 
+const CURRENT_SNAPSHOT = {
+  netWorth: 169017939,
+  cash: 6339834,
+  liabilities: 51479287,
+  investment: 214157392
+};
+
 const REAL_HOLDINGS = [
-  { ticker:'ALAB2X', name:'Tradr 2X Long ALAB Daily ETF', market:'US', shares:32053, price:151.74, value:155220831, type:'槓桿單一股票 ETF', risk:'extreme', note:'Astera Labs 2x，每日槓桿，為目前最大集中風險與報酬來源。' },
-  { ticker:'00631L', name:'元大台灣50正2', market:'TW', shares:350000, price:38.80, value:13580000, type:'台股槓桿 ETF', risk:'high', note:'台灣大型權值股 2x 日報酬，與台股/台積電高度相關。' },
-  { ticker:'2330', name:'台積電', market:'TW', shares:3180, price:2445, value:7775100, type:'個股', risk:'high', note:'半導體核心持股，與 SOXX/00631L 有相關性。' },
-  { ticker:'MRVL2X', name:'二倍做多 MRVL ETF - GraniteShares', market:'US', shares:2205, price:37.93, value:2669148, type:'槓桿單一股票 ETF', risk:'extreme', note:'Marvell 2x，每日槓桿，需納入前 10 年序列風險。' },
-  { ticker:'MU2X', name:'二倍做多美光科技 ETF - Direxion', market:'US', shares:53, price:745.21, value:1260479, type:'槓桿單一股票 ETF', risk:'extreme', note:'Micron 2x，記憶體景氣循環曝險。' },
-  { ticker:'NBIS2X', name:'GraniteShares 2x Long NBIS Daily ETF', market:'US', shares:535, price:33.16, value:566174, type:'槓桿單一股票 ETF', risk:'extreme', note:'NBIS 2x，小型高波動衛星部位。' },
-  { ticker:'2330', name:'台積電（小帳）', market:'TW', shares:175, price:2445, value:427875, type:'個股', risk:'high', note:'台積電補充部位。' },
-  { ticker:'2891', name:'中信金', market:'TW', shares:5000, price:70.60, value:353000, type:'金融股', risk:'medium', note:'台灣金融股，波動低於半導體與槓桿 ETF。' }
+  { ticker:'ALAB2X', name:'Tradr 2X Long ALAB Daily ETF', market:'US', shares:32053, price:179.51, value:184340308, type:'槓桿單一股票 ETF', risk:'extreme', note:'Astera Labs 2x，每日槓桿，為目前最大集中風險與報酬來源。' },
+  { ticker:'00631L', name:'元大台灣50正2', market:'TW', shares:400000, price:38.75, value:15500000, type:'台股槓桿 ETF', risk:'high', note:'台灣大型權值股 2x 日報酬，與台股/台積電高度相關。' },
+  { ticker:'2330', name:'台積電', market:'TW', shares:3180, price:2460, value:7822800, type:'個股', risk:'high', note:'半導體核心持股，與 SOXX/00631L 有相關性。' },
+  { ticker:'MRVL2X', name:'二倍做多 MRVL ETF - GraniteShares', market:'US', shares:2205, price:41.36, value:2921827, type:'槓桿單一股票 ETF', risk:'extreme', note:'Marvell 2x，每日槓桿，需納入前 10 年序列風險。' },
+  { ticker:'MU2X', name:'二倍做多美光科技 ETF - Direxion', market:'US', shares:53, price:786.47, value:1335432, type:'槓桿單一股票 ETF', risk:'extreme', note:'Micron 2x，記憶體景氣循環曝險。' },
+  { ticker:'NBIS2X', name:'GraniteShares 2x Long NBIS Daily ETF', market:'US', shares:535, price:34.33, value:588428, type:'槓桿單一股票 ETF', risk:'extreme', note:'NBIS 2x，小型高波動衛星部位。' },
+  { ticker:'2330-S', name:'台積電（小帳）', market:'TW', shares:175, price:2460, value:430500, type:'個股', risk:'high', note:'台積電補充部位。' },
+  { ticker:'2891', name:'中信金', market:'TW', shares:5000, price:71.40, value:357000, type:'金融股', risk:'medium', note:'台灣金融股，波動低於半導體與槓桿 ETF。' },
+  { ticker:'SPACEX', name:'SpaceX', market:'US', shares:53, price:160.63, value:272752, type:'非上市/替代資產', risk:'high', note:'私人股權/替代資產，流動性與估值不確定性較高。' },
+  { ticker:'AIQ/AI', name:'VistaShares Artificial Intelligence ETF', market:'US', shares:100, price:78.30, value:250842, type:'AI 主題 ETF', risk:'high', note:'AI 主題曝險，與美股成長股相關性高。' },
+  { ticker:'2887', name:'台新新光金', market:'TW', shares:6447, price:34.30, value:221132, type:'金融股', risk:'medium', note:'台灣金融股，作為低波動補充持股。' },
+  { ticker:'2884', name:'玉山金', market:'TW', shares:3378, price:34.45, value:116372, type:'金融股', risk:'medium', note:'台灣金融股，作為低波動補充持股。' }
 ];
 function realHoldingsTotal(){ return REAL_HOLDINGS.reduce((s,h)=>s+h.value,0); }
+function holdingTotalByMarket(market){ return REAL_HOLDINGS.filter(h=>h.market===market).reduce((s,h)=>s+h.value,0); }
 function highRiskHoldingValue(){ return REAL_HOLDINGS.filter(h=>['high','extreme'].includes(h.risk)).reduce((s,h)=>s+h.value,0); }
+function renderNetWorthSnapshot(){
+  const node = $('networth-snapshot');
+  if (!node) return;
+  const us = holdingTotalByMarket('US');
+  const tw = holdingTotalByMarket('TW');
+  const holdingsTotal = realHoldingsTotal();
+  const rows = [
+    ['淨資產', CURRENT_SNAPSHOT.netWorth],
+    ['現金', CURRENT_SNAPSHOT.cash],
+    ['投資總額', CURRENT_SNAPSHOT.investment],
+    ['美股總額', us],
+    ['台股總額', tw],
+    ['負債', CURRENT_SNAPSHOT.liabilities]
+  ];
+  node.innerHTML = rows.map(([label, value]) => `<div><span>${label}</span><b>${twMoney(value, label.includes('總額') || label==='淨資產' ? 2 : 0)}</b><small>NT$${Math.round(value).toLocaleString('en-US')}</small></div>`).join('') + `<div class="snapshot-wide"><span>持股明細合計</span><b>${twMoney(holdingsTotal,2)}</b><small>美股 + 台股；與 Percento 投資總額可能有四捨五入差異。</small></div>`;
+}
 
 function netWorthFromInvestable(v){ return Number(v || 0) - Number(state?.netWorthGap || 0); }
 function investableFromNetWorth(v){ return Number(v || 0) + Number(state?.netWorthGap || 0); }
@@ -280,13 +308,13 @@ function exportCashflowCsv() {
   if (!currentSim) return;
   const headers = ['年份','年齡','年初資產','年底資產','生活費','貸款','總支出','提領率','投資報酬','新增投資','貸款餘額','通膨','組合報酬','股票報酬','債券報酬','Freeze'];
   const rows = currentSim.sample.map(r => [r.year,r.age,Math.round(r.beginAssets),Math.round(r.assets),Math.round(r.living),Math.round(r.loanPayment),Math.round(r.totalSpending),r.withdrawalRate.toFixed(2),Math.round(r.investmentReturn),Math.round(r.contribution),Math.round(r.loanBalance),r.inflation?.toFixed?.(2) ?? '',r.ret?.toFixed?.(2) ?? '',r.stockRet?.toFixed?.(2) ?? '',r.bondRet?.toFixed?.(2) ?? '',r.freeze ? 'Y':'N']);
-  downloadCsv('retirement_cashflow_v6_2.csv', headers, rows);
+  downloadCsv('retirement_cashflow_v6_3.csv', headers, rows);
 }
 function exportDecisionCsv() {
   if (!currentMatrix) return;
   const headers = ['淨資產','可投資資產','第一年提領率','成功率','SAFE MAX','建議','邊際成功率'];
   const rows = currentMatrix.map((r,i) => [Math.round(netWorthFromInvestable(r.assets)),Math.round(r.assets),r.firstWithdrawalRate.toFixed(2),r.successRate.toFixed(1),r.safemax.toFixed(2),String(r.advice).replace(/^[^\s]+\s*/,''),i===0?'':(currentMatrix[i].successRate-currentMatrix[i-1].successRate).toFixed(1)]);
-  downloadCsv('retirement_decision_matrix_v6_2.csv', headers, rows);
+  downloadCsv('retirement_decision_matrix_v6_3.csv', headers, rows);
 }
 function renderDiagnostics(sim, matrix) {
   const first = sim.sample[0];
@@ -547,6 +575,7 @@ function renderNotes(){
   <div class="note-item"><b>📈 股票配置</b><br>股票 65% 預設拆成：00631L 20%、VOO/VTI/VXUS 合計 60%、SOXX 20%。整體資產約為 00631L 13%、SOXX 13%、美國/全球核心 ETF 39%。</div>`;
 }
 function render(){
+  renderNetWorthSnapshot();
   [...document.querySelectorAll('#scenario-buttons button')].forEach(b=>{ const n=Number(b.dataset.netWorth||0); b.classList.toggle('active', Math.abs(n-netWorthFromInvestable(state.investableAssets))<10000000); });
   const sim=simulate(state,loans,portfolio,SIM_RUNS,SIM_SEED); const loanRows=annualLoanSchedule(loans,state.retirementYears,state.startYear); const timing=timingOptimizer(state,loans,portfolio,{runs:SIM_RUNS,seedBase:SIM_SEED}); const matrix=decisionMatrix(state,loans,portfolio,scenarios.map(investableFromNetWorth),{runs:SIM_RUNS,seedBase:SIM_SEED});
   currentSim = sim; currentMatrix = matrix; currentLoanRows = loanRows;
@@ -602,7 +631,7 @@ async function init(){
   // v5.1 changes default living expense from 600萬 to 500萬.
   // If an older saved profile still has the old untouched default 600萬, migrate it once.
   if (!saved?.version && state.annualLivingExpense === 6000000) state.annualLivingExpense = assumptions.annualLivingExpense;
-  // v6.2 fallback for older saved profiles.
+  // v6.3 fallback for older saved profiles.
   state.dynamicColaInflationThreshold ??= assumptions.dynamicColaInflationThreshold ?? 5;
   state.dynamicColaStockDrawdownThreshold ??= assumptions.dynamicColaStockDrawdownThreshold ?? state.dynamicColaDrawdownThreshold ?? -5;
   state.dynamicColaBondDrawdownThreshold ??= assumptions.dynamicColaBondDrawdownThreshold ?? state.dynamicColaDrawdownThreshold ?? -5;
@@ -617,6 +646,6 @@ async function init(){
   $('save-modal-close')?.addEventListener('click', hideSaveModal);
   $('save-modal')?.addEventListener('click', e=>{ if(e.target.id==='save-modal') hideSaveModal(); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') hideSaveModal(); });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=6.2.0').catch(()=>{});
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=6.3.0').catch(()=>{});
 }
 init();

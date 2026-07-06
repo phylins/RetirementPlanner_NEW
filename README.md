@@ -1,17 +1,30 @@
-export const clamp = (n, min, max) => Math.min(max, Math.max(min, Number(n) || 0));
-export const pct = (n, digits = 1) => `${Number(n).toFixed(digits)}%`;
-export function twMoney(n, digits = 1) {
-  const v = Number(n) || 0;
-  const sign = v < 0 ? '-' : '';
-  const a = Math.abs(v);
-  if (a >= 100000000) return `${sign}${(a / 100000000).toFixed(digits)}億`;
-  if (a >= 10000) return `${sign}${Math.round(a / 10000).toLocaleString('zh-TW')}萬`;
-  return `${sign}${Math.round(a).toLocaleString('zh-TW')}`;
-}
-export function twWan(n, digits = 0) { return `${(Number(n || 0) / 10000).toFixed(digits)}萬`; }
-export function numberInput(v) { return Math.round(Number(v) || 0).toLocaleString('en-US'); }
-export function parseNumberInput(v) { return Number(String(v).replace(/,/g, '')) || 0; }
-export function star(score) {
-  const s = Math.max(0, Math.min(5, Math.round(score / 20)));
-  return '★★★★★'.slice(0, s) + '☆☆☆☆☆'.slice(0, 5 - s);
-}
+# Retirement Planner v6.3 PWA
+
+## v6.3 更新重點
+
+本版在 v6.2 個人決策版上更新 Percento 資產快照與持股拆分：
+
+1. **真實持股與集中度**：依 Percento 截圖建立可辨識持股清單，顯示 ALAB 2X、00631L、台積電、MRVL 2X 等集中度。
+2. **科技股 / 槓桿資產 Glide Path**：規劃退休後逐年降低高波動資產比重。
+3. **退休前 10 年 Sequence Risk**：檢查前 10 年股災、股債雙殺、槓桿 ETF 腰斬與低報酬情境。
+4. **年度可花金額建議**：依成功率、SAFE MAX 與第一年提領率給出年度生活費建議區間。
+5. 保留 v6.2 的真實持股、Glide Path、Sequence Risk、年度可花建議與個人決策模組。
+
+## 使用方式
+
+1. 更新 2026 當下資產參考：淨資產 1.690 億、現金 634 萬、投資 2.142 億、負債 5,148 萬。
+2. 投資拆分新增：美股總額約 1.897 億、台股總額約 2,445 萬。
+3. 更新可投資資產與淨資產差額為約 4,514 萬，淨資產試算按鈕會用最新差額換算。
+4. 更新真實持股清單：ALAB2X、00631L、台積電、MRVL2X、MU2X、NBIS2X、SpaceX、AI 主題 ETF、金融股等。
+
+## 使用方式
+
+1. 解壓縮 ZIP。
+2. 將最外層檔案覆蓋到 GitHub repo 根目錄。
+3. 確認 repo 根目錄的 `index.html` 第一行含有 `v6.3 root index`。
+4. Commit / push 後等待 GitHub Pages 部署。
+5. 若仍顯示舊版，按右上角「更新到最新版」。
+
+## 注意
+
+真實持股資料目前依使用者提供的 Percento 截圖人工建立；若要完全精準，後續可改成匯入 CSV 或完整持股 JSON。
